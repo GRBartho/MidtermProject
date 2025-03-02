@@ -1,6 +1,174 @@
+<h1>{{title}}</h1>
+
 <h2>Spells List</h2>
 <ul>
   {{#each spells}}
-    <li>{{name}} - Damage: {{damage}} - Description: {{description}}</li>
+    <li>
+      {{name}} - {{#if damage}} Damage: {{damage}}{{/if}}
+      <button class="delete-btn" data-id="{{id}}">Delete</button>
+      <button class="edit-btn" data-id="{{id}}">Edit</button>
+    </li>
   {{/each}}
 </ul>
+
+<h3>Add a New Spell</h3>
+<form id="addSpellForm">
+  <label for="name">Name:</label>
+  <input type="text" name="name" required />
+  <br />
+
+  <label for="damage">Damage:</label>
+  <input type="text" name="damage" />
+  <br />
+
+  <label for="description">Description:</label>
+  <input type="text" name="description" />
+  <br />
+
+  <button type="submit">Add Spell</button>
+</form>
+
+
+<form id="editSpellForm" style="display: none;">
+  <h3>Edit Spell</h3>
+  <input type="hidden" name="id" />
+  
+  <label for="editName">Name:</label>
+  <input type="text" name="editname" required />
+  <br />
+  
+  <label for="editDamage">Damage:</label>
+  <input type="text" name="editdamage" />
+  <br />
+  
+  <label for="editDescription">Description:</label>
+  <input type="text" name="editdescription" />
+  <br />
+  
+  <button type="submit">Update Spell</button>
+  <button type="button" id="cancelEditBtn">Cancel</button>
+</form>
+
+
+<script>
+  // Handle Add Spell form submission
+  document.getElementById("addSpellForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+      name: formData.get("name"),
+      damage: formData.get("damage"),
+      description: formData.get("description"),
+    };
+
+    try {
+      const response = await fetch("/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || "Failed to add spell");
+      }
+    } catch (error) {
+      alert("An error occurred while adding the spell.");
+    }
+  });
+
+  // Handle Delete button click
+  document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', async function() {
+      const spellId = this.getAttribute('data-id');
+      
+      try {
+        const response = await fetch(`http://localhost:8080/spells/${spellId}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          // Remove the deleted spell from the UI
+          this.parentElement.remove();
+        } else {
+          const errorData = await response.json();
+          alert(errorData.error || "Failed to delete spell");
+        }
+      } catch (error) {
+        alert("An error occurred while deleting the spell.");
+      }
+    });
+  });
+
+  // Handle Edit button click
+document.querySelectorAll('.edit-btn').forEach(button => {
+  button.addEventListener('click', async function() {
+    const spellId = this.getAttribute('data-id');
+
+    // Fetch the current spell details
+    try {
+      const response = await fetch(`http://localhost:8080/spells/${spellId}`);
+      if (response.ok) {
+        const spell = await response.json();
+
+        // Populate the edit form with current spell data
+        document.querySelector("input[name='id']").value = spell.id;
+        document.querySelector("input[name='editname']").value = spell.name;
+        document.querySelector("input[name='editdamage']").value = spell.damage;
+        document.querySelector("input[name='editdescription']").value = spell.description;
+
+        // Show the edit form and hide the main list
+        document.getElementById("editSpellForm").style.display = "block";
+      } else {
+        alert("Failed to fetch spell data for editing.");
+      }
+    } catch (error) {
+      alert("An error occurred while fetching spell data.");
+    }
+  });
+});
+
+// Handle Edit Spell form submission
+document.getElementById("editSpellForm").addEventListener("submit", async function(event) {
+  event.preventDefault();
+
+  const formData = new FormData(this);
+  const data = {
+    name: formData.get("name"),
+    damage: formData.get("damage"),
+    description: formData.get("description"),
+  };
+
+  const spellId = formData.get("id");
+
+  try {
+    const response = await fetch(`http://localhost:8080/spells/${spellId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      window.location.reload();
+    } else {
+      const errorData = await response.json();
+      alert(errorData.error || "Failed to update spell");
+    }
+  } catch (error) {
+    alert("An error occurred while updating the spell.");
+  }
+});
+
+// Handle Cancel Edit button click
+document.getElementById("cancelEditBtn").addEventListener("click", function() {
+  document.getElementById("editSpellForm").style.display = "none"; // Hide the edit form
+});
+
+</script>

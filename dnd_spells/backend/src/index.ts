@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
-import fs from "fs-extra"; // ✅ Use ES Module import
-import { Spell } from "./types"; // ✅ Ensure `Spell` type is correctly defined
+import fs from "fs-extra";
+import { Spell } from "./types";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -74,6 +74,15 @@ app.get("/spells", (req: Request, res: Response) => {
   res.json(spells);
 });
 
+app.get("/spells/:id", (req: Request, res: Response) => {
+  const { id } = req.params;
+  const spells: Spell[] = getSpells();
+  const filteredSpells = spells.filter((spell) => spell.id === parseInt(id));
+  res.json(filteredSpells[0]);
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+//npm run dev to start
